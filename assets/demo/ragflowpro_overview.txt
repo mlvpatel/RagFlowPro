@@ -1,0 +1,11 @@
+RagFlowPro overview.
+
+RagFlowPro is a retrieval augmented generation chatbot for question answering over your own documents.
+
+Retrieval is hybrid. It combines dense vector search on pgvector with sparse Postgres full text search, and fuses the two ranked lists with reciprocal rank fusion inside a single SQL query. There is no per query index rebuild.
+
+Embeddings are produced by Google gemini-embedding-001 in production. The same system can run fully locally and free using Ollama models such as nomic-embed-text for embeddings and a local chat model for generation.
+
+Conversation memory is stored in Postgres, so the assistant remembers earlier turns in the same session.
+
+Documents are indexed asynchronously through a Celery worker backed by Redis. The reranker is bge-reranker-v2-m3.
