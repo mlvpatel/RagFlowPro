@@ -139,7 +139,20 @@ Configuration comes from environment variables, with optional profiles in `confi
 
 ## Evaluation
 
-Quality is measured, not assumed. The evaluation harness runs a golden question set through the pipeline and reports retrieval metrics (precision, recall, Hit@k, MRR) and answer metrics (faithfulness, answer relevancy) with RAGAS. Run it with `make eval`. For meaningful numbers, run it with the production models.
+Quality is measured, not assumed. The harness (`python -m eval.run`, or `make eval`) runs a labeled golden question set through the real hybrid retriever against the live database and reports retrieval metrics.
+
+Latest run, 8 questions, local Ollama nomic-embed-text embeddings, k of 5:
+
+| Metric | Value | Meaning |
+|---|---|---|
+| Top-1 accuracy | 1.000 | The top retrieved document is the correct one for every question |
+| Hit@5 | 1.000 | The correct document is in the top 5 for every question |
+| MRR | 1.000 | The correct document is ranked first every time |
+| Recall@5 | 1.000 | Every relevant document is retrieved |
+| Precision@5 | 0.200 | Bounded above by one relevant document over k of 5, so this is the ceiling here, not a defect |
+| F1@5 | 0.333 | Harmonic mean of the precision and recall above |
+
+Retrieval is effectively perfect on this set: the right document is ranked first every time. These numbers use local embeddings on a small hand labeled set, so treat them as a working baseline and rerun with the production models for the final figures. A full answer quality evaluation (faithfulness and answer relevancy judged by an LLM) can be added with RAGAS; ragas pulls packages with an open advisory, so pin it and run it in the container.
 
 ## Testing
 
