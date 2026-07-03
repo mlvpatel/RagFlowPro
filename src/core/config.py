@@ -45,9 +45,13 @@ class Settings(BaseSettings):
     google_api_key: str | None = None
     openai_api_key: str | None = None
     api_key: str = "change_me"
+    embedding_provider: str = "google"  # google or ollama
     embedding_model: str = "models/gemini-embedding-001"
     embedding_dims: int = 768
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_embedding_model: str = "nomic-embed-text"
     reranker_model: str = "BAAI/bge-reranker-v2-m3"
+    use_reranker: bool = True
     top_k: int = 5
     reranker_top_n: int = 5
     chunk_size: int = 1000

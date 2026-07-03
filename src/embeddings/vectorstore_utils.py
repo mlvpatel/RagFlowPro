@@ -51,7 +51,21 @@ def _get_text_splitter() -> RecursiveCharacterTextSplitter:
 
 
 def _build_embeddings(task_type: str):
-    """Construct a gemini-embedding-001 embedder for the given task type."""
+    """Construct an embedder for the given task type.
+
+    Provider is chosen by settings.embedding_provider. Google
+    gemini-embedding-001 is the production default. Ollama (a local, no cost
+    embedder such as nomic-embed-text) is available for offline development
+    and verification; it ignores the task type.
+    """
+    if settings.embedding_provider == "ollama":
+        from langchain_ollama import OllamaEmbeddings
+
+        return OllamaEmbeddings(
+            model=settings.ollama_embedding_model,
+            base_url=settings.ollama_base_url,
+        )
+
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
     return GoogleGenerativeAIEmbeddings(
