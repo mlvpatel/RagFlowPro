@@ -57,7 +57,12 @@ def test_insert_application_logs_issues_insert_with_four_params():
     sql, params = cursor.execute.call_args[0]
     assert "INSERT INTO application_logs" in sql
     assert "%s" in sql
-    assert params == ("session-123", "what is ragflow?", "it is a rag app", "gemini-embedding-001")
+    assert params == (
+        "session-123",
+        "what is ragflow?",
+        "it is a rag app",
+        "gemini-embedding-001",
+    )
 
 
 def test_get_chat_history_maps_rows_to_alternating_human_ai_dicts_in_order():

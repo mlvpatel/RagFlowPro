@@ -3,6 +3,7 @@
 This proves the full chat pipeline works for real, with local models, no paid
 key. It is skipped automatically when Ollama is not running.
 """
+
 import urllib.request
 
 import psycopg
@@ -63,7 +64,9 @@ def test_end_to_end_rag_answer_is_grounded(pg_available, monkeypatch):
         use_jsonb=True,
     )
     _cleanup()
-    store.add_documents([Document(page_content=f, metadata={"file_id": FILE_ID}) for f in FACTS])
+    store.add_documents(
+        [Document(page_content=f, metadata={"file_id": FILE_ID}) for f in FACTS]
+    )
 
     try:
         result = lu.answer_question("llama3.2:3b", "What is the capital of France?")

@@ -1,4 +1,5 @@
 """Sidebar component: model choice and document management."""
+
 import streamlit as st
 
 from frontend import api_utils

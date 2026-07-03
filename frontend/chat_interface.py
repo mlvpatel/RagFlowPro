@@ -1,4 +1,5 @@
 """Chat interface component for the RagFlowPro Streamlit app."""
+
 import streamlit as st
 
 from frontend import api_utils
@@ -23,9 +24,12 @@ def display_chat_interface() -> None:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
+
         def token_stream():
             model = st.session_state.get("model", "gpt-4o-mini")
-            for event in api_utils.stream_chat(prompt, st.session_state.session_id, model):
+            for event in api_utils.stream_chat(
+                prompt, st.session_state.session_id, model
+            ):
                 if "token" in event:
                     yield event["token"]
                 elif event.get("done"):

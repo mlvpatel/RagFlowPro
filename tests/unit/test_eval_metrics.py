@@ -1,11 +1,12 @@
 """Unit tests for the retrieval evaluation metrics."""
+
 from eval.metrics import (
     f1_score,
     hit_at_k,
     mean,
     precision_at_k,
-    reciprocal_rank,
     recall_at_k,
+    reciprocal_rank,
 )
 
 

@@ -1,4 +1,5 @@
 """Shared fixtures for integration tests that require the live data stack."""
+
 import psycopg
 import pytest
 

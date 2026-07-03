@@ -10,6 +10,7 @@ Everything heavy is lazy. Importing this module opens no database
 connection and loads no embedding client, which keeps unit tests fast
 and lets processes import it without credentials.
 """
+
 import datetime
 import logging
 import os

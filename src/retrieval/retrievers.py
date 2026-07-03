@@ -10,6 +10,7 @@ A cross encoder reranker (bge-reranker-v2-m3) then reorders the fused
 candidates. The reranker is loaded lazily and can be injected, so tests
 run without downloading the model or importing torch.
 """
+
 import logging
 from typing import Any, List
 
@@ -77,7 +78,9 @@ class HybridRetriever(BaseRetriever):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def _get_relevant_documents(self, query: str, *, run_manager=None) -> List[Document]:
+    def _get_relevant_documents(
+        self, query: str, *, run_manager=None
+    ) -> List[Document]:
         qvec = _vector_literal(self.embeddings.embed_query(query))
         with psycopg.connect(self.connection) as conn:
             with conn.cursor() as cur:
@@ -125,7 +128,9 @@ class ReRankingRetriever(BaseRetriever):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    def _get_relevant_documents(self, query: str, *, run_manager=None) -> List[Document]:
+    def _get_relevant_documents(
+        self, query: str, *, run_manager=None
+    ) -> List[Document]:
         docs = self.base_retriever.invoke(query)
         if not docs:
             return docs

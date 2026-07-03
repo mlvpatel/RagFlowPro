@@ -1,4 +1,5 @@
 """Unit tests for the frontend API client (no server, no streamlit)."""
+
 from frontend import api_utils
 
 
@@ -31,7 +32,9 @@ def test_stream_chat_parses_sse_tokens_then_done(monkeypatch):
         'data: {"token": " world"}',
         'data: {"done": true, "session_id": "abc"}',
     ]
-    monkeypatch.setattr(api_utils.requests, "post", lambda *a, **k: _FakeResp(lines=lines))
+    monkeypatch.setattr(
+        api_utils.requests, "post", lambda *a, **k: _FakeResp(lines=lines)
+    )
 
     events = list(api_utils.stream_chat("hi", None, "gpt-4o-mini"))
 

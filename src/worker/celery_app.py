@@ -1,4 +1,5 @@
 """Celery application for background document indexing."""
+
 from celery import Celery
 
 from src.core.config import settings

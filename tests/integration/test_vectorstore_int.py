@@ -3,6 +3,7 @@
 Uses a deterministic fake embedder so the store round trip runs without any
 embedding API key. Only Postgres with pgvector is required.
 """
+
 import psycopg
 from langchain_core.documents import Document
 from langchain_core.embeddings import DeterministicFakeEmbedding

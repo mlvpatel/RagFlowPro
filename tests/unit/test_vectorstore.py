@@ -1,4 +1,5 @@
 """Unit tests for the vector store utilities (no database, no network)."""
+
 from unittest.mock import MagicMock, patch
 
 from langchain_core.documents import Document
@@ -15,7 +16,10 @@ def test_text_splitter_chunks_a_long_document():
 
 
 def test_index_document_tags_each_chunk_with_file_id_and_filename(monkeypatch):
-    canned = [Document(page_content="a", metadata={}), Document(page_content="b", metadata={})]
+    canned = [
+        Document(page_content="a", metadata={}),
+        Document(page_content="b", metadata={}),
+    ]
     monkeypatch.setattr(vs, "load_and_split_document", lambda path: canned)
     store = MagicMock()
     monkeypatch.setattr(vs, "get_store", lambda: store)
@@ -42,7 +46,9 @@ def test_delete_doc_runs_a_collection_scoped_sql_delete():
     conn = conn_cm.__enter__.return_value
     cur = conn.cursor.return_value.__enter__.return_value
 
-    with patch("src.embeddings.vectorstore_utils.psycopg.connect", return_value=conn_cm):
+    with patch(
+        "src.embeddings.vectorstore_utils.psycopg.connect", return_value=conn_cm
+    ):
         ok = vs.delete_doc(7)
 
     assert ok is True

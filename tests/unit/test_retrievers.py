@@ -1,4 +1,5 @@
 """Unit tests for hybrid retrieval and reranking (no database, no torch)."""
+
 from unittest.mock import MagicMock, patch
 
 from langchain_core.documents import Document
@@ -28,7 +29,11 @@ class _FakeEmbeddings:
 
 
 def test_reranking_orders_by_score_and_truncates_to_top_n():
-    docs = [Document(page_content="a"), Document(page_content="b"), Document(page_content="c")]
+    docs = [
+        Document(page_content="a"),
+        Document(page_content="b"),
+        Document(page_content="c"),
+    ]
     retriever = ReRankingRetriever(
         base_retriever=_FakeBase(docs),
         top_n=2,

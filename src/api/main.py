@@ -1,4 +1,5 @@
 """RagFlowPro API: streaming RAG chat plus document management."""
+
 import json
 import os
 import shutil
@@ -6,7 +7,15 @@ import uuid
 from contextlib import asynccontextmanager
 
 from celery.result import AsyncResult
-from fastapi import APIRouter, Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from prometheus_fastapi_instrumentator import Instrumentator

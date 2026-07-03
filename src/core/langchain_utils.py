@@ -9,6 +9,7 @@ retrieved context. Both a single-shot and a streaming entry point are
 provided. The LLM provider is chosen from the model name, so the same code
 serves OpenAI, Anthropic, and local Ollama models.
 """
+
 import logging
 from typing import Any, Iterator, List
 
@@ -57,7 +58,9 @@ _qa_prompt = ChatPromptTemplate.from_messages(
 def _make_llm(model: str):
     """Return a chat model for the given model name, provider chosen by name."""
     name = model.lower()
-    if any(tag in name for tag in ("llama", "qwen", "deepseek", "mistral", "gemma", "phi")):
+    if any(
+        tag in name for tag in ("llama", "qwen", "deepseek", "mistral", "gemma", "phi")
+    ):
         from langchain_ollama import ChatOllama
 
         return ChatOllama(model=model, base_url=settings.ollama_base_url)

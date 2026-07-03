@@ -1,4 +1,5 @@
 """Security utilities: API key auth, rate limiting, input sanitization."""
+
 from typing import Optional
 
 import bleach
@@ -11,7 +12,9 @@ from src.core.config import settings
 limiter = Limiter(key_func=get_remote_address)
 
 
-def verify_api_key(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")) -> str:
+def verify_api_key(
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")
+) -> str:
     """Require a matching X-API-Key header on protected endpoints."""
     if x_api_key != settings.api_key:
         raise HTTPException(

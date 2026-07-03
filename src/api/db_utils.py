@@ -52,8 +52,7 @@ def create_application_logs() -> None:
     """Create the application_logs table and its session_id index if missing."""
     with _get_pool().connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS application_logs (
                     id           BIGSERIAL PRIMARY KEY,
                     session_id   TEXT NOT NULL,
@@ -62,8 +61,7 @@ def create_application_logs() -> None:
                     model        TEXT NOT NULL,
                     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
                 )
-                """
-            )
+                """)
             cur.execute(
                 "CREATE INDEX IF NOT EXISTS idx_application_logs_session_id "
                 "ON application_logs (session_id)"
@@ -74,15 +72,13 @@ def create_document_store() -> None:
     """Create the document_store table if missing."""
     with _get_pool().connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(
-                """
+            cur.execute("""
                 CREATE TABLE IF NOT EXISTS document_store (
                     id               BIGSERIAL PRIMARY KEY,
                     filename         TEXT NOT NULL,
                     upload_timestamp TIMESTAMPTZ NOT NULL DEFAULT now()
                 )
-                """
-            )
+                """)
 
 
 def init_db() -> None:
@@ -152,9 +148,7 @@ def delete_document_record(file_id: int) -> bool:
     try:
         with _get_pool().connection() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    "DELETE FROM document_store WHERE id = %s", (file_id,)
-                )
+                cur.execute("DELETE FROM document_store WHERE id = %s", (file_id,))
         return True
     except Exception as e:
         logger.error(f"Failed to delete document record {file_id}: {e}")

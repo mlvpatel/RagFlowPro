@@ -1,4 +1,5 @@
 """Functional tests for the API endpoints (TestClient, services mocked)."""
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -34,7 +35,9 @@ def test_chat_requires_api_key(client):
 
 def test_chat_streams_tokens_and_persists_the_turn(client, monkeypatch):
     monkeypatch.setattr(main, "get_chat_history", lambda session_id: [])
-    monkeypatch.setattr(main, "stream_answer", lambda model, q, history: iter(["Hello", " world"]))
+    monkeypatch.setattr(
+        main, "stream_answer", lambda model, q, history: iter(["Hello", " world"])
+    )
     persisted = {}
     monkeypatch.setattr(
         main,

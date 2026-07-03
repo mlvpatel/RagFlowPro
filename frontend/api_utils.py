@@ -3,6 +3,7 @@
 All calls go through the v1 router and carry the X-API-Key header. The chat
 call consumes the server sent event stream and yields tokens as they arrive.
 """
+
 import json
 import os
 
@@ -32,7 +33,7 @@ def stream_chat(question: str, session_id, model: str):
     for line in response.iter_lines(decode_unicode=True):
         if not line or not line.startswith("data: "):
             continue
-        payload = json.loads(line[len("data: "):])
+        payload = json.loads(line[len("data: ") :])
         if "token" in payload:
             yield {"token": payload["token"]}
         elif payload.get("done"):

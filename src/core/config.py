@@ -102,9 +102,7 @@ def load_settings() -> Settings:
         return base
 
     applicable = {
-        key: value
-        for key, value in yaml_overrides.items()
-        if not _env_var_is_set(key)
+        key: value for key, value in yaml_overrides.items() if not _env_var_is_set(key)
     }
     if not applicable:
         return base
