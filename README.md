@@ -8,7 +8,7 @@ RagFlowPro answers questions about your own documents. It combines dense vector 
 
 The screenshot above is a live run. The model is a local llama3.2, the document was indexed into pgvector, and the answer is grounded in that document. No paid keys were used.
 
-![Python](https://img.shields.io/badge/python-3.11-blue) ![FastAPI](https://img.shields.io/badge/FastAPI-async-green) ![Postgres](https://img.shields.io/badge/Postgres-pgvector-blue) ![Tests](https://img.shields.io/badge/tests-42%20passing-brightgreen) ![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/mlvpatel/RagFlowPro/actions/workflows/ci.yml/badge.svg)](https://github.com/mlvpatel/RagFlowPro/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11-blue) ![Postgres](https://img.shields.io/badge/Postgres-pgvector-blue) ![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Why RagFlowPro
 
@@ -184,4 +184,4 @@ Malav Patel. GitHub @mlvpatel.
 
 ## License
 
-MIT.
+Released under the MIT License. See [LICENSE](LICENSE). MIT is a deliberate choice for this project: it is the simplest and most permissive of the common open source licenses, so anyone, including a client evaluating the work, can read, run, modify, and reuse the code with no friction and no legal overhead.
