@@ -8,6 +8,8 @@ RagFlowPro answers questions about your own documents. It combines dense vector 
 
 The screenshot above is a live run. The model is a local llama3.2, the document was indexed into pgvector, and the answer is grounded in that document. No paid keys were used.
 
+**Demo:** a short screen recording of the working chatbot is at [assets/videos/ragflowpro-demo.webm](assets/videos/ragflowpro-demo.webm) (plays in any modern browser), and a screenshot of it answering from a real SEC 10-K filing is at [assets/screenshots/ragflowpro-sample-data-demo.png](assets/screenshots/ragflowpro-sample-data-demo.png).
+
 [![CI](https://github.com/mlvpatel/RagFlowPro/actions/workflows/ci.yml/badge.svg)](https://github.com/mlvpatel/RagFlowPro/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11-blue) ![Postgres](https://img.shields.io/badge/Postgres-pgvector-blue) ![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Why RagFlowPro
