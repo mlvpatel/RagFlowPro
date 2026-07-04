@@ -39,6 +39,11 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+
 # RAG data and models
 chroma_db/
 data/uploads/
