@@ -210,4 +210,4 @@ Malav Patel. GitHub @mlvpatel.
 
 ## License
 
-Released under the MIT License. See [LICENSE](LICENSE). MIT is a deliberate choice for this project: it is the simplest and most permissive of the common open source licenses, so anyone, including a client evaluating the work, can read, run, modify, and reuse the code with no friction and no legal overhead.
+Released under the MIT License. See [LICENSE](LICENSE). MIT is the simplest and most permissive of the common open source licenses, so anyone can read, run, modify, and reuse the code freely.
