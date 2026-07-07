@@ -198,11 +198,13 @@ RagFlowPro is one rung in a year by year line of enterprise RAG systems, each a 
 
 | Year | Repository | Generation |
 |---|---|---|
-| 2022 | RagFlow | Naive RAG, single dense retrieval |
+| 2022 | [RagFlow](https://github.com/mlvpatel/RagFlow) | Naive RAG, single dense retrieval |
 | 2023 | [RagFlowPlus](https://github.com/mlvpatel/RagFlowPlus) | Advanced RAG, hybrid retrieval and reranking |
 | 2024 | RagFlowPro, this repo | Modular production RAG, pgvector, streaming, evaluation |
-| 2025 | RagFlowProPlus, RagFlowKAG | Agentic RAG, knowledge graph with reasoning |
-| 2026 | RagFlowProMax, UltimateRAG | Multi agent enterprise, multimodal |
+| 2025 | [RagFlowProPlus](https://github.com/mlvpatel/RagFlowProPlus), RagFlowKAG | Agentic RAG, knowledge graph with reasoning |
+| 2026 | [RagFlowProMax](https://github.com/mlvpatel/RagFlowProMax), UltimateRAG | Multi agent enterprise, multimodal |
+
+Every rung is measured on the same golden questions, keyless, in the [rag-catalog](https://github.com/mlvpatel/rag-catalog) hub.
 
 ## Author
 
