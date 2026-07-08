@@ -2,7 +2,7 @@
 
 **Retrieval augmented generation chatbot with hybrid retrieval, streaming answers, and a measurable quality gate.**
 
-**Part of the RagFlow line, enterprise RAG built year by year. This repository is RagFlowPro, Modular production RAG, 2024.** See [the full line](#the-ragflow-line) below.
+**Part of the RagFlow line, a series of reference enterprise RAG implementations. This repository is RagFlowPro, Modular production RAG.** See [the full line](#the-ragflow-line) below.
 
 RagFlowPro answers questions about your own documents. It combines dense vector search and sparse keyword search inside the database, streams grounded answers token by token, remembers the conversation, and can run fully locally at no cost or against cloud models in production.
 
@@ -194,7 +194,7 @@ configs/          dev and prod profiles
 
 ## The RagFlow line
 
-RagFlowPro is one rung in a year by year line of enterprise RAG systems, each a faithful snapshot of the best production RAG of its year.
+RagFlowPro is one implementation in the RagFlow line, a series demonstrating distinct enterprise RAG retrieval strategies.
 
 | Year | Repository | Generation |
 |---|---|---|
@@ -204,7 +204,7 @@ RagFlowPro is one rung in a year by year line of enterprise RAG systems, each a 
 | 2025 | [RagFlowProPlus](https://github.com/mlvpatel/RagFlowProPlus), RagFlowKAG | Agentic RAG, knowledge graph with reasoning |
 | 2026 | [RagFlowProMax](https://github.com/mlvpatel/RagFlowProMax), UltimateRAG | Multi agent enterprise, multimodal |
 
-Every rung is measured on the same golden questions, keyless, in the [rag-catalog](https://github.com/mlvpatel/rag-catalog) hub.
+Every implementation is measured on the same golden questions, keyless, in the [rag-catalog](https://github.com/mlvpatel/rag-catalog) hub.
 
 ## Author
 
