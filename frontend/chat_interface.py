@@ -35,6 +35,16 @@ def display_chat_interface() -> None:
                 elif event.get("done"):
                     st.session_state.session_id = event.get("session_id")
 
-        answer = st.write_stream(token_stream())
+        try:
+            answer = st.write_stream(token_stream())
+        except Exception:
+            # The API stream dropped (service down, network, or a mid-stream
+            # server error). Show a readable message instead of a raw traceback.
+            answer = (
+                "⚠️ Couldn't reach the demo service. Make sure it's still running "
+                "(the black setup window / Docker), then ask again. If it keeps "
+                "happening, contact Malav."
+            )
+            st.error(answer)
 
     st.session_state.messages.append({"role": "assistant", "content": answer})

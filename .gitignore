@@ -1,0 +1,23 @@
+# Secrets and local config — never commit
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# Local data (uploads, sqlite)
+data/
+*.sqlite3
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

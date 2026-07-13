@@ -55,6 +55,12 @@ services:
     environment:
       DATABASE_URL: postgresql://ragflow:ragflow@postgres:5432/ragflowpro
       REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /app/data/uploads
+    # FIX: api and worker must share the uploads dir. The api writes the uploaded
+    # file here; the worker (a separate container) reads it back to index it.
+    # Without this shared volume, every client upload fails to index.
+    volumes:
+      - ragflowpro-uploads:/app/data/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,6 +81,9 @@ services:
     environment:
       DATABASE_URL: postgresql://ragflow:ragflow@postgres:5432/ragflowpro
       REDIS_URL: redis://redis:6379/0
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - ragflowpro-uploads:/app/data/uploads   # SHARED with api — the fix
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,3 +110,4 @@ services:
 
 volumes:
   ragflowpro-pgdata:
+  ragflowpro-uploads:

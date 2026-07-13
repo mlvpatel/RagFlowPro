@@ -81,9 +81,23 @@ def chat(request: Request, query: QueryInput, _: str = Depends(verify_api_key)):
 
     def event_stream():
         parts = []
-        for token in stream_answer(query.model, question, history):
-            parts.append(token)
-            yield f"data: {json.dumps({'token': token})}\n\n"
+        # A provider call (LLM reformulation, embeddings, or generation) can raise
+        # mid-stream — e.g. an expired API key or a hit spend cap. Catch it so the
+        # SSE stream still ends cleanly with a readable message, instead of aborting
+        # the HTTP response and surfacing ChunkedEncodingError in the client.
+        try:
+            for token in stream_answer(query.model, question, history):
+                parts.append(token)
+                yield f"data: {json.dumps({'token': token})}\n\n"
+        except Exception as exc:
+            logger.exception("Generation failed for session %s", session_id)
+            note = (
+                "\n\n⚠️ The assistant couldn't complete this answer. This usually "
+                "means an AI provider key is missing or expired, or a spend cap was "
+                f"reached ({type(exc).__name__}). Check the .env keys and try again."
+            )
+            parts.append(note)
+            yield f"data: {json.dumps({'token': note})}\n\n"
         answer = "".join(parts)
         try:
             insert_application_logs(session_id, question, answer, query.model)
