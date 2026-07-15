@@ -1,4 +1,4 @@
-"""Client for the RagFlowPro API, used by the Streamlit frontend.
+"""Client for the rag-modular-2023 API, used by the Streamlit frontend.
 
 All calls go through the v1 router and carry the X-API-Key header. The chat
 call consumes the server sent event stream and yields tokens as they arrive.

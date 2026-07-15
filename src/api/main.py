@@ -1,4 +1,4 @@
-"""RagFlowPro API: streaming RAG chat plus document management."""
+"""rag-modular-2023 API: streaming RAG chat plus document management."""
 
 import json
 import os
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="RagFlowPro API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="rag-modular-2023 API", version="1.0.0", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
@@ -82,7 +82,7 @@ def chat(request: Request, query: QueryInput, _: str = Depends(verify_api_key)):
     def event_stream():
         parts = []
         # A provider call (LLM reformulation, embeddings, or generation) can raise
-        # mid-stream — e.g. an expired API key or a hit spend cap. Catch it so the
+        # mid-stream, e.g. an expired API key or a hit spend cap. Catch it so the
         # SSE stream still ends cleanly with a readable message, instead of aborting
         # the HTTP response and surfacing ChunkedEncodingError in the client.
         try:

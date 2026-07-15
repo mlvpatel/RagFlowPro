@@ -1,6 +1,6 @@
-RagFlowPro overview.
+rag-modular-2023 overview.
 
-RagFlowPro is a retrieval augmented generation chatbot for question answering over your own documents.
+rag-modular-2023 is a retrieval augmented generation chatbot for question answering over your own documents.
 
 Retrieval is hybrid. It combines dense vector search on pgvector with sparse Postgres full text search, and fuses the two ranked lists with reciprocal rank fusion inside a single SQL query. There is no per query index rebuild.
 

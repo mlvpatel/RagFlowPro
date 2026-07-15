@@ -1,4 +1,4 @@
-"""Chat interface component for the RagFlowPro Streamlit app."""
+"""Chat interface component for the rag-modular-2023 Streamlit app."""
 
 import streamlit as st
 

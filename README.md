@@ -6,11 +6,11 @@ Part of the RAG line, a series of reference enterprise RAG implementations, one 
 
 This service answers questions about your own documents. It runs dense vector search and sparse keyword search inside Postgres, fuses them with Reciprocal Rank Fusion in a single query, reranks with a cross encoder, streams grounded answers token by token, remembers the conversation, and runs fully locally at no cost or against cloud models in production.
 
-![Answering a document question live on a local model](assets/videos/ragflowpro-demo.gif)
+![Answering a document question live on a local model](assets/videos/rag_modular-demo.gif)
 
 The animation above is a live, unedited run. The model is a local llama3.2, the documents (including a real SEC 10-K) are indexed in pgvector, and the answer streams in grounded in them. No paid keys were used.
 
-Full recording at [assets/videos/ragflowpro-demo.webm](assets/videos/ragflowpro-demo.webm), full resolution screenshot at [assets/screenshots/ragflowpro-sample-data-demo.png](assets/screenshots/ragflowpro-sample-data-demo.png).
+Full recording at [assets/videos/rag_modular-demo.webm](assets/videos/rag_modular-demo.webm), full resolution screenshot at [assets/screenshots/rag_modular-sample-data-demo.png](assets/screenshots/rag_modular-sample-data-demo.png).
 
 [![CI](https://github.com/mlvpatel/rag-modular-2023/actions/workflows/ci.yml/badge.svg)](https://github.com/mlvpatel/rag-modular-2023/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11-blue) ![Postgres](https://img.shields.io/badge/Postgres-pgvector-blue) ![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -300,7 +300,7 @@ Environment variables, with optional profiles in `configs/dev.yml` and `configs/
 
 | Setting | Default | Meaning |
 |---|---|---|
-| DATABASE_URL | postgresql://ragflow:ragflow@localhost:5432/ragflowpro | Postgres, vectors and memory |
+| DATABASE_URL | postgresql://rag:rag@localhost:5432/rag_modular | Postgres, vectors and memory |
 | REDIS_URL | redis://localhost:6379/0 | Celery broker |
 | EMBEDDING_PROVIDER | google | google or ollama |
 | EMBEDDING_MODEL | models/gemini-embedding-001 | Google embedding model, 768d |
@@ -379,8 +379,6 @@ This repo is the Modular (2023) rung. Each rung adds one idea and keeps the ones
 | 2025 | [rag-agentic-2025](https://github.com/mlvpatel/rag-agentic-2025) | Agentic: bounded self correcting loop, confidence gated |
 | 2026 | [rag-multiagent-2026](https://github.com/mlvpatel/rag-multiagent-2026) | Multi agent: supervisor, specialists, verifier |
 | 2026 | [rag-multimodal-2026](https://github.com/mlvpatel/rag-multimodal-2026) | Multimodal: text and images in one vector space |
-
-Every implementation is measured on the same golden questions, keyless, in the [rag-catalog](https://github.com/mlvpatel/rag-catalog) hub. To pick the right rung for a real problem, see [rag-ladder](https://github.com/mlvpatel/rag-ladder).
 
 ## Author
 
