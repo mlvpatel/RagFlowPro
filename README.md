@@ -14,6 +14,10 @@ Full recording at [assets/videos/ragflowpro-demo.webm](assets/videos/ragflowpro-
 
 [![CI](https://github.com/mlvpatel/rag-modular-2023/actions/workflows/ci.yml/badge.svg)](https://github.com/mlvpatel/rag-modular-2023/actions/workflows/ci.yml) ![Python](https://img.shields.io/badge/python-3.11-blue) ![Postgres](https://img.shields.io/badge/Postgres-pgvector-blue) ![Coverage](https://img.shields.io/badge/coverage-86%25-brightgreen) ![License](https://img.shields.io/badge/license-MIT-green)
 
+## Contents
+
+[What this rung adds](#what-this-rung-adds) · [Tech stack](#tech-stack) · [System context](#system-context-c4-level-1) · [Containers](#containers-c4-level-2) · [Data model](#data-model) · [Ingestion](#ingestion-pipeline) · [Retrieval](#retrieval-pipeline) · [The mathematics](#the-mathematics) · [Memory](#memory) · [LLM](#llm) · [Quick start](#quick-start) · [Configuration](#configuration) · [API](#api-reference) · [Evaluation](#evaluation) · [Testing](#testing) · [Structure](#project-structure)
+
 ## What this rung adds
 
 The rung below, [rag-advanced-2023](https://github.com/mlvpatel/rag-advanced-2023), already does hybrid retrieval and reranking, but in Python over Chroma. This rung keeps the same retrieval idea and changes the data plane.
@@ -22,28 +26,98 @@ Fusion moves into the database. Dense and sparse both run in one SQL statement n
 
 It also adds streaming answers over server sent events, conversational memory keyed by session id, asynchronous indexing through a Celery worker so uploads return immediately, and a labeled golden set that runs through the real retriever against the live database.
 
-## Architecture
+## Tech stack
+
+| Layer | Choice | Why this one |
+|---|---|---|
+| API | FastAPI, Python 3.11 | async, native SSE streaming, generated OpenAPI docs |
+| UI | Streamlit | a chat surface in a few files, no frontend build |
+| Orchestration | langchain-core (LCEL) | composable chains without the legacy `langchain.chains` helpers, stable across majors |
+| Vector store | Postgres 16 with pgvector | one database for vectors and memory, and fusion can run in SQL |
+| Driver | psycopg 3 | the hybrid query is raw SQL, run on a connection pool |
+| Sparse search | Postgres full text (`tsvector`) | no second engine to run or keep in sync |
+| Reranker | bge-reranker-v2-m3 (sentence-transformers) | multilingual cross encoder, Apache-2.0, runs locally |
+| Embeddings | gemini-embedding-001, or Ollama nomic-embed-text | cloud quality by default, keyless local path for development |
+| Generation | OpenAI, Anthropic, or Ollama | chosen by model name, so the same code serves all three |
+| Async work | Celery with Redis | uploads return immediately, indexing happens off the request path |
+| Observability | Prometheus, structured logging | `/metrics` is scrapeable, logs are parseable |
+| Packaging | Docker Compose | one command brings up the whole stack |
+
+## System context (C4 level 1)
 
 ```mermaid
-graph TD
-    User[User in browser] --> UI[Streamlit chat UI]
-    UI -->|X-API-Key| API[FastAPI, v1 router]
-    API --> Chain[RAG chain, LCEL, streaming]
-    API --> Memory[(application_logs, conversation memory)]
-    Chain --> Retriever[HybridRetriever]
-    Retriever --> PG[(Postgres and pgvector, langchain_pg_embedding)]
-    Retriever --> Reranker[ReRankingRetriever, bge-reranker-v2-m3]
-    Chain --> LLM[LLM: OpenAI, Anthropic or Ollama, chosen by model name]
-    API --> Queue[Celery via Redis]
-    Queue --> Index[index_document]
-    Index --> PG
+graph TB
+    user([Analyst<br/>asks questions about internal documents])
+    sys[rag-modular-2023<br/>Retrieval augmented QA service]
+    llm[LLM provider<br/>OpenAI, Anthropic or Ollama]
+    emb[Embedding provider<br/>Google or Ollama]
+    user -->|asks a question, uploads a document| sys
+    sys -->|grounded answer with sources| user
+    sys -->|prompt with retrieved context| llm
+    sys -->|text to embed| emb
 ```
 
-One database serves two roles: vectors, in `langchain_pg_collection` and `langchain_pg_embedding` written by PGVector, and memory plus catalog, in `application_logs` and `document_store` written by `src/api/db_utils.py`.
+The service is the only system that touches the documents. Both providers are swappable, and both have a local option, so the whole thing can run with no third party at all.
+
+## Containers (C4 level 2)
+
+```mermaid
+graph TB
+    subgraph client[Client]
+        ui[Streamlit UI<br/>chat, upload, model picker]
+    end
+    subgraph svc[Service]
+        api[FastAPI<br/>v1 router, auth, SSE]
+        worker[Celery worker<br/>indexing]
+    end
+    subgraph data[Data]
+        pg[(Postgres + pgvector<br/>vectors, memory, catalog)]
+        redis[(Redis<br/>broker)]
+    end
+    ui -->|HTTPS, X-API-Key| api
+    api -->|enqueue| redis
+    redis --> worker
+    api -->|hybrid SQL, memory| pg
+    worker -->|embed and insert chunks| pg
+```
+
+## Data model
+
+One database, two concerns. PGVector owns the first two tables; `src/api/db_utils.py` owns the other two.
+
+```mermaid
+erDiagram
+    langchain_pg_collection ||--o{ langchain_pg_embedding : contains
+    document_store ||--o{ langchain_pg_embedding : "file_id in cmetadata"
+    langchain_pg_collection {
+        uuid uuid PK
+        string name
+    }
+    langchain_pg_embedding {
+        string id PK
+        uuid collection_id FK
+        vector embedding "768 dims"
+        text document "chunk text"
+        jsonb cmetadata "carries file_id"
+    }
+    document_store {
+        int id PK
+        string filename
+        timestamp upload_timestamp
+    }
+    application_logs {
+        int id PK
+        text session_id "indexed"
+        text user_query
+        text gpt_response
+        text model
+        timestamp created_at
+    }
+```
+
+`file_id` living in `cmetadata` on every chunk is what makes deletion work: removing a document means deleting its `document_store` row and every embedding whose metadata carries that id.
 
 ## Ingestion pipeline
-
-How a document gets in.
 
 ```mermaid
 sequenceDiagram
@@ -60,42 +134,92 @@ sequenceDiagram
     W->>R: pick up task
     W->>W: load .pdf, .docx, .html or .txt
     W->>W: RecursiveCharacterTextSplitter(1000, overlap 200)
-    W->>W: embed each chunk, task_type retrieval_document
+    W->>W: embed chunks, task_type retrieval_document
     W->>PG: add_documents, file_id on every chunk
     U->>A: GET /v1/task/{id} for status
 ```
 
-The detail that matters: every chunk carries its `file_id` in metadata, which is what lets `POST /v1/delete-doc` remove a document and all of its chunks. Indexing is idempotent per file_id.
+An upload returns before the work is done, so the task has a lifecycle worth watching:
+
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: enqueued on Redis
+    PENDING --> STARTED: worker picks it up
+    STARTED --> SUCCESS: chunks embedded and stored
+    STARTED --> FAILURE: parse or embed error
+    SUCCESS --> [*]
+    FAILURE --> [*]
+```
+
+`GET /v1/task/{task_id}` reports that state, so the UI can poll instead of blocking the upload request.
 
 ## Retrieval pipeline
 
-How a question finds context. This is the heart of this rung: one SQL query does dense, sparse and fusion together.
+One SQL query does dense, sparse and fusion together. Only the rerank happens in Python.
 
 ```mermaid
-graph LR
-    Q[Question] --> QE[Embed, task_type retrieval_query]
+flowchart LR
+    Q[Question] --> QE[Embed<br/>task_type retrieval_query]
     QE --> SQL{{Single SQL statement}}
     Q --> SQL
-    SQL --> D[dense CTE, cosine distance, row_number gives rank_dense]
-    SQL --> S[sparse CTE, to_tsvector matches plainto_tsquery, ts_rank gives rank_sparse]
+    SQL --> D["dense CTE<br/>cosine distance<br/>row_number gives rank_dense"]
+    SQL --> S["sparse CTE<br/>tsvector matches tsquery<br/>ts_rank gives rank_sparse"]
     D --> F[FULL OUTER JOIN on id]
     S --> F
-    F --> RRF[score is 1/&#40;k+rank_dense&#41; plus 1/&#40;k+rank_sparse&#41;]
+    F --> RRF[RRF score]
     RRF --> TOP[ORDER BY score DESC LIMIT k]
-    TOP --> RR[bge-reranker-v2-m3 cross encoder]
+    TOP --> RR[bge-reranker-v2-m3<br/>cross encoder]
     RR --> C[top_n chunks into the prompt]
 ```
 
-1. Dense. `e.embedding <=> %(qvec)s::vector` is pgvector cosine distance, and `row_number()` gives `rank_dense`, capped at `pool`.
+1. Dense. `e.embedding <=> %(qvec)s::vector` is pgvector cosine distance, and `row_number()` turns it into `rank_dense`, capped at `pool`.
 2. Sparse. Postgres full text, `to_tsvector('english', document) @@ plainto_tsquery(...)`, ranked by `ts_rank` into `rank_sparse`.
-3. Fusion. A `FULL OUTER JOIN` keeps a chunk found by either arm, then RRF scores it as `1/(rrf_k + rank_dense) + 1/(rrf_k + rank_sparse)` with missing ranks coalesced to zero. Being rank based, it never has to normalize two incomparable score scales.
-4. Rerank. `ReRankingRetriever` runs the cross encoder over the fused candidates and truncates to `reranker_top_n`. It is lazily loaded and injectable, so the test suite runs without downloading the model or importing torch.
+3. Fusion. A `FULL OUTER JOIN` keeps a chunk found by either arm, and RRF combines the two ranks.
+4. Rerank. `ReRankingRetriever` scores the fused candidates jointly with the query and truncates to `reranker_top_n`. It is lazily loaded and injectable, so the test suite runs without downloading the model or importing torch.
 
-Embeddings are asymmetric. Documents are embedded with `task_type=retrieval_document` and queries with `retrieval_query`, through `get_document_embeddings()` and `get_query_embeddings()`. Gemini embeddings are trained for that asymmetry; Ollama ignores the task type.
+## The mathematics
+
+**Embedding and cosine distance.** A chunk becomes a vector $\mathbf{v} \in \mathbb{R}^{768}$. pgvector's `<=>` operator is cosine *distance*, the complement of cosine similarity:
+
+$$d_{\cos}(\mathbf{a}, \mathbf{b}) = 1 - \frac{\mathbf{a} \cdot \mathbf{b}}{\lVert \mathbf{a} \rVert \, \lVert \mathbf{b} \rVert}$$
+
+so $d = 0$ is identical and $d = 2$ is opposite. Ordering ascending by `<=>` ranks the nearest chunk first.
+
+**Why the embeddings are asymmetric.** A question and the passage answering it are not paraphrases, so embedding both with one function is a mismatch. Gemini takes a task type, giving two different maps $f_D$ for documents and $f_Q$ for queries trained so that
+
+$$\text{sim}\big(f_Q(q),\, f_D(d)\big) \text{ is high when } d \text{ answers } q$$
+
+rather than when $q$ and $d$ merely look alike. Hence `get_document_embeddings()` and `get_query_embeddings()`.
+
+**Sparse ranking.** Postgres scores a document against a query with `ts_rank`, which weights matched lexeme frequency and position. Only rank order is used downstream, not the raw value.
+
+**Reciprocal Rank Fusion.** Dense distance and `ts_rank` are different scales that cannot be compared or averaged. RRF avoids the problem by discarding the scores and using only ranks. For a chunk $d$ and retriever set $R$:
+
+$$\text{RRF}(d) = \sum_{r \in R} \frac{1}{k + \text{rank}_r(d)}$$
+
+With $R = \{\text{dense}, \text{sparse}\}$, the implemented form is
+
+$$\text{score}(d) = \frac{1}{k + \text{rank}_{\text{dense}}(d)} + \frac{1}{k + \text{rank}_{\text{sparse}}(d)}$$
+
+where a chunk missing from one arm contributes $0$ for that term, which is exactly what `coalesce(..., 0)` does after the `FULL OUTER JOIN`. The constant $k$ (`rrf_k`, default 60) damps the top ranks: without it a rank-1 hit would score $1$ and a rank-2 hit $0.5$, so a single arm could dominate. With $k = 60$ those become $\tfrac{1}{61} \approx 0.0164$ and $\tfrac{1}{62} \approx 0.0161$, so agreement across both arms outweighs a strong opinion from one. This is the property that makes RRF robust, and it is why the fusion is rank based rather than a weighted score sum.
+
+**Reranking.** The bi-encoder scores $q$ and $d$ independently, which is what makes indexing possible but costs accuracy. The cross encoder reads the pair together, $s = g(q \oplus d)$, and attends across both. It is too slow for the whole corpus and ideal for the $k$ survivors, which is why it sits last.
+
+**Chunking.** With chunk size $c = 1000$ and overlap $o = 200$, the stride is $c - o = 800$, so a document of length $L$ yields roughly
+
+$$n \approx \left\lceil \frac{L - o}{c - o} \right\rceil$$
+
+chunks. The overlap exists so a fact spanning a boundary survives in at least one chunk.
+
+**Retrieval metrics.** With $\mathcal{R}$ the relevant set and $\mathcal{T}_k$ the top $k$ retrieved:
+
+$$P@k = \frac{|\mathcal{R} \cap \mathcal{T}_k|}{k} \qquad R@k = \frac{|\mathcal{R} \cap \mathcal{T}_k|}{|\mathcal{R}|} \qquad F_1 = \frac{2PR}{P+R}$$
+
+$$\text{MRR} = \frac{1}{|Q|}\sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}$$
+
+where $\text{rank}_i$ is the position of the first relevant document for question $i$. Note $P@k$ is bounded by $|\mathcal{R}|/k$: with one relevant document and $k=5$, the best achievable precision is $0.2$, which is why the number below is a ceiling and not a defect.
 
 ## Memory
-
-How follow up questions work.
 
 ```mermaid
 sequenceDiagram
@@ -121,7 +245,7 @@ sequenceDiagram
 
 The store is `application_logs(id, session_id, user_query, gpt_response, model, created_at)` with an index on `session_id`. `get_chat_history()` replays it as alternating human and AI messages.
 
-Reformulation matters because "and what about the second one?" is unretrievable on its own. The contextualize step rewrites it into a standalone question before retrieval, and is skipped on the first turn, which saves a model call on the most common case. Memory is per session id, server side, in Postgres rather than the browser, so a refresh keeps the thread.
+Reformulation matters because "and what about the second one?" is unretrievable on its own: its embedding carries no topic. The contextualize step rewrites it into a standalone question before retrieval, and is skipped on the first turn, which saves a model call on the most common case. Memory is per session id, server side, in Postgres rather than the browser, so a refresh keeps the thread.
 
 ## LLM
 
@@ -132,25 +256,9 @@ Reformulation matters because "and what about the second one?" is unretrievable 
 | Embeddings, query | same model | same | task_type retrieval_query |
 | Reranker | BAAI/bge-reranker-v2-m3 | disable with USE_RERANKER=false | local cross encoder, warmed at startup |
 
-There are two prompts, both in `src/core/langchain_utils.py`: `CONTEXTUALIZE_SYSTEM` rewrites and never answers, and `QA_SYSTEM` answers only from context and says so rather than guessing. The chain is built on `langchain-core` LCEL rather than the legacy `langchain.chains` helpers, which is what keeps it stable across LangChain majors.
+There are two prompts, both in `src/core/langchain_utils.py`: `CONTEXTUALIZE_SYSTEM` rewrites and never answers, and `QA_SYSTEM` answers only from context and says so rather than guessing.
 
 Running fully offline is a first class path: `EMBEDDING_PROVIDER=ollama` with a local `llama3.2:3b` and `USE_RERANKER=false` runs the whole system with no paid key.
-
-## Features
-
-| Area | Capability |
-|---|---|
-| Retrieval | Dense pgvector and sparse Postgres full text, fused with RRF in one SQL query |
-| Reranking | Cross encoder bge-reranker-v2-m3, lazily loaded and injectable |
-| Embeddings | Google gemini-embedding-001 with asymmetric task types, or local Ollama |
-| Generation | OpenAI, Anthropic, or local Ollama, chosen by model name |
-| Memory | Multi turn sessions in Postgres, with question reformulation |
-| Streaming | Server sent events on the chat endpoint |
-| Async indexing | Celery worker backed by Redis, with task status |
-| Security | API key auth, rate limiting, input sanitization, CORS |
-| Observability | Prometheus metrics at /metrics, structured logging |
-| Evaluation | Retrieval metrics on a labeled golden set against the live database |
-| Packaging | Docker Compose for the full stack, 42 tests, 86 percent coverage |
 
 ## Quick start
 
@@ -227,7 +335,7 @@ Latest run, 8 questions, local Ollama nomic-embed-text, k of 5:
 | Hit@5 | 1.000 | The correct document is in the top 5 every time |
 | MRR | 1.000 | The correct document is ranked first every time |
 | Recall@5 | 1.000 | Every relevant document is retrieved |
-| Precision@5 | 0.200 | A ceiling, not a defect: one relevant document over k of 5 |
+| Precision@5 | 0.200 | The ceiling for one relevant document at k of 5, not a defect |
 | F1@5 | 0.333 | Harmonic mean of the above |
 
 Read these honestly. They measure retrieval, not answer faithfulness. The metrics are computed in `eval/metrics.py` as hit@k, precision@k, recall@k, F1 and reciprocal rank, not by a model judge. It is a small hand labeled set on local embeddings, so treat it as a working baseline and rerun with production models for final figures. Answer level scoring such as faithfulness and answer relevancy is not implemented here; `ragas` is present in `requirements.txt` but unused, so wire it in the container and pin it, since it pulls packages with an open advisory.
@@ -252,8 +360,9 @@ src/worker/       Celery app and indexing task
 frontend/         Streamlit chat UI
 eval/             golden set and retrieval metrics harness
 tests/            unit and integration tests
-docker/           Dockerfile and Compose stack
+docker/           Dockerfile, Compose stack, pgvector init SQL
 configs/          dev and prod profiles
+scripts/          sample data loader
 ```
 
 ## The RAG line
