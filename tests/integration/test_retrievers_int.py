@@ -18,14 +18,18 @@ COLLECTION = "rag_modular_test_hybrid"
 
 
 def _cleanup():
-    with psycopg.connect(settings.database_url) as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "DELETE FROM langchain_pg_embedding e "
-                "USING langchain_pg_collection c "
-                "WHERE e.collection_id = c.uuid AND c.name = %s",
-                (COLLECTION,),
-            )
+    # A fresh database has no pgvector tables yet; nothing to clean is fine.
+    try:
+        with psycopg.connect(settings.database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "DELETE FROM langchain_pg_embedding e "
+                    "USING langchain_pg_collection c "
+                    "WHERE e.collection_id = c.uuid AND c.name = %s",
+                    (COLLECTION,),
+                )
+    except psycopg.errors.UndefinedTable:
+        pass
 
 
 def test_hybrid_retrieval_surfaces_the_matching_document(pg_available):
