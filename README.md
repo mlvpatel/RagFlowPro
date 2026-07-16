@@ -74,7 +74,7 @@ graph TB
         pg[(Postgres + pgvector<br/>vectors, memory, catalog)]
         redis[(Redis<br/>broker)]
     end
-    ui -->|HTTPS, X-API-Key| api
+    ui -->|HTTPS| api
     api -->|enqueue| redis
     redis --> worker
     api -->|hybrid SQL, memory| pg
@@ -309,7 +309,7 @@ Environment variables, with optional profiles in `configs/dev.yml` and `configs/
 | TOP_K | 5 | Candidates kept after fusion |
 | RERANKER_TOP_N | 5 | Chunks kept after reranking |
 | CHUNK_SIZE, CHUNK_OVERLAP | 1000, 200 | Splitter settings |
-| API_KEY | change_me | Required in the X-API-Key header |
+| MAX_UPLOAD_MB | 25 | Uploads rejected above this size |
 
 ## API reference
 
@@ -322,6 +322,10 @@ Environment variables, with optional profiles in `configs/dev.yml` and `configs/
 | POST /v1/delete-doc | Delete a document and all of its chunks |
 | GET /v1/task/{task_id} | Status of an async indexing task |
 | GET /metrics | Prometheus metrics |
+
+## A note on access
+
+The service has no authentication, and that is a decision rather than an omission. It is a reference implementation meant to run on one machine: docker compose binds every published port, Postgres and Redis included, to `127.0.0.1`, and the containers run as a non-root user. A shipped default credential would be the worse option, since it reads as protection while sitting in a public repository. What remains is real: per route rate limiting, a hard size cap on uploads, HTML stripping on every question, and a narrow CORS origin. Put an authenticating gateway in front before exposing any of it beyond loopback.
 
 ## Evaluation
 

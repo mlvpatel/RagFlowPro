@@ -23,7 +23,6 @@ def test_settings_has_documented_defaults():
     assert settings.redis_url == "redis://localhost:6379/0"
     assert settings.google_api_key is None
     assert settings.openai_api_key is None
-    assert settings.api_key == "change_me"
     assert settings.allowed_origins == "http://localhost:8501"
     assert settings.log_level == "INFO"
     assert settings.env == "dev"

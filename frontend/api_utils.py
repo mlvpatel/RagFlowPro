@@ -1,6 +1,6 @@
 """Client for the rag-modular-2023 API, used by the Streamlit frontend.
 
-All calls go through the v1 router and carry the X-API-Key header. The chat
+All calls go through the v1 router. The chat
 call consumes the server sent event stream and yields tokens as they arrive.
 """
 
@@ -10,11 +10,10 @@ import os
 import requests
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
-API_KEY = os.getenv("API_KEY", "change_me")
 
 
 def _headers(json_content: bool = True) -> dict:
-    headers = {"X-API-Key": API_KEY}
+    headers = {}
     if json_content:
         headers["Content-Type"] = "application/json"
     return headers
